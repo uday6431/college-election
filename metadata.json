@@ -1,0 +1,5 @@
+{
+  "name": "College Election System",
+  "description": "A React frontend application for managing college elections, featuring student and admin login, and sections for conducting elections, participating in positions, casting votes, QR codes, and results.",
+  "requestFramePermissions": []
+}
