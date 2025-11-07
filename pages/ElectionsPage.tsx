@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Election, QRCodeEntry, Application, ApplicationStatus, User, UserRole } from '../types';
 import { DUMMY_ELECTION_TEMPLATE } from '../constants';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
+import Footer from '../components/Footer';
 
 declare const qrcode: any; // Declare qrcode as a global variable
 
@@ -11,7 +12,6 @@ interface ElectionsPageProps {
   setElections: React.Dispatch<React.SetStateAction<Election[]>>;
   applications: Application[];
   setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
-  // Added to update global users state and current user in App.tsx
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   updateLoggedInUser: (updatedUser: User) => void;
 }
@@ -67,41 +67,50 @@ const ElectionsPage: React.FC<ElectionsPageProps> = ({
 
   if (!user || user.role === UserRole.ADMIN) {
     return (
-      <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gray-50 p-8">
-        <div className="text-center bg-white p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-xl text-gray-700 mb-6">
-            Only students can participate in elections. Admins manage them.
-          </p>
-          {!user && (
-             <p className="text-lg text-gray-600">Please log in as a student to vote.</p>
-          )}
+      <>
+        <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+          <div className="text-center bg-white p-10 rounded-xl shadow-xl border border-gray-100">
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-5">Access Denied</h1>
+            <p className="text-xl text-gray-700 mb-8">
+              Only students are eligible to participate and cast votes in elections.
+            </p>
+            {!user && (
+              <p className="text-lg text-gray-600">Please <a href="/login" className="text-blue-600 hover:underline">log in</a> as a student to vote.</p>
+            )}
+            {user && user.role === UserRole.ADMIN && (
+              <p className="text-lg text-gray-600">Administrators manage elections, they do not vote.</p>
+            )}
+          </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
   if (!currentElection) {
     return (
-      <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gray-50 p-8">
-        <div className="text-center bg-white p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">No Active Elections</h1>
-          <p className="text-xl text-gray-700 mb-6">
-            There are no elections available for voting at this moment.
-          </p>
+      <>
+        <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+          <div className="text-center bg-white p-10 rounded-xl shadow-xl border border-gray-100">
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-5">No Active Elections</h1>
+            <p className="text-xl text-gray-700 mb-8">
+              There are no elections available for voting at this moment. Please check back later!
+            </p>
+          </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
   const FeedbackMessage: React.FC<{ text: string; type: 'success' | 'error' | '' }> = ({ text, type }) => {
     if (!text) return null;
-    const bgColor = type === 'success' ? 'bg-green-100' : 'bg-red-100';
+    const bgColor = type === 'success' ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300';
     const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
     const icon = type === 'success' ? '✅' : '❌';
     return (
       <div
-        className={`p-4 mb-6 rounded-lg flex items-center ${bgColor} ${textColor}`}
+        className={`p-4 mb-6 rounded-lg border flex items-center ${bgColor} ${textColor}`}
         role="status"
         aria-live="polite"
       >
@@ -115,22 +124,22 @@ const ElectionsPage: React.FC<ElectionsPageProps> = ({
     event.preventDefault();
 
     if (hasVoted) {
-      setMessage({ text: 'You have already voted for this election.', type: 'error' });
+      setMessage({ text: 'You have already cast your vote for this election.', type: 'error' });
       return;
     }
 
     if (!studentNameInput || !studentRollNumberInput) {
-      setMessage({ text: 'Please enter your name and roll number.', type: 'error' });
+      setMessage({ text: 'Please ensure your name and roll number are filled.', type: 'error' });
       return;
     }
     if (!selectedCandidateId) {
-      setMessage({ text: 'Please select a candidate before generating QR.', type: 'error' });
+      setMessage({ text: 'Please select a candidate before generating the QR code.', type: 'error' });
       return;
     }
 
     const candidate = currentElection.candidates.find(c => c.id === selectedCandidateId);
     if (!candidate) {
-        setMessage({ text: 'Selected candidate not found.', type: 'error' });
+        setMessage({ text: 'Selected candidate not found. Please try again.', type: 'error' });
         return;
     }
 
@@ -143,7 +152,7 @@ const ElectionsPage: React.FC<ElectionsPageProps> = ({
 
   const handleSimulateVote = () => {
     if (!voteConfirmedCandidateId || !user) {
-        setMessage({ text: 'No candidate selected or user not logged in.', type: 'error' });
+        setMessage({ text: 'Error: Candidate or user information missing.', type: 'error' });
         return;
     }
 
@@ -184,14 +193,14 @@ const ElectionsPage: React.FC<ElectionsPageProps> = ({
     // Update the current logged-in user state in App.tsx
     updateLoggedInUser(updatedUser);
 
-    setMessage({ text: 'Your vote has been cast successfully!', type: 'success' });
+    setMessage({ text: 'Your vote has been cast successfully! Thank you for participating.', type: 'success' });
     handleResetVotingState(); // Reset all states for a new vote
     setShowVoteQrModal(false); // Close the modal
   };
 
   const handleCancelVote = () => {
     setShowVoteQrModal(false);
-    setMessage({ text: 'Vote cancelled.', type: 'error' });
+    setMessage({ text: 'Voting process cancelled.', type: 'error' });
     setVoteQrCodeValue('');
     setVoteConfirmedCandidateId('');
   };
@@ -205,6 +214,8 @@ const ElectionsPage: React.FC<ElectionsPageProps> = ({
   };
 
   const hasApplied = applications.some(app => app.studentId === user.id && app.electionId === currentElection.id);
+  const myApplication = applications.find(app => app.studentId === user.id && app.electionId === currentElection.id);
+
 
   const handleApplyForPosition = (event: React.FormEvent) => {
     event.preventDefault();
@@ -213,7 +224,7 @@ const ElectionsPage: React.FC<ElectionsPageProps> = ({
         return;
     }
     if (hasApplied) {
-        setMessage({ text: 'You have already applied for this election.', type: 'error' });
+        setMessage({ text: 'You have already submitted an application for this election.', type: 'error' });
         return;
     }
 
@@ -226,176 +237,196 @@ const ElectionsPage: React.FC<ElectionsPageProps> = ({
     };
 
     setApplications(prevApps => [...prevApps, newApplication]);
-    setMessage({ text: 'Your application has been submitted successfully for review!', type: 'success' });
+    setMessage({ text: 'Your application has been submitted successfully for review by administrators!', type: 'success' });
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-gray-50 p-8">
-      <div className="container mx-auto max-w-2xl bg-white p-8 rounded-lg shadow-xl">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-4 text-center">{currentElection.title}</h1>
-        <p className="text-lg text-gray-700 mb-6 text-center">{currentElection.description}</p>
+    <>
+      <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+        <div className="container mx-auto max-w-3xl bg-white p-10 rounded-xl shadow-xl border border-gray-100">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-5 text-center">{currentElection.title}</h1>
+          <p className="text-lg md:text-xl text-gray-700 mb-8 text-center leading-relaxed">{currentElection.description}</p>
 
-        <FeedbackMessage text={message.text} type={message.type} />
+          <FeedbackMessage text={message.text} type={message.type} />
 
-        {/* Application Section for Students */}
-        <div className="space-y-6 p-6 border-2 border-dashed border-purple-300 rounded-lg bg-purple-50 mb-8">
-          <h2 className="text-2xl font-bold text-purple-800 text-center mb-4">Apply for Position</h2>
-          {hasApplied ? (
-            <div className="text-center">
-              <p className="text-purple-700 font-semibold mb-2">
-                You have already applied for this election.
-              </p>
-              <p className={`text-lg font-medium ${
-                applications.find(app => app.studentId === user.id && app.electionId === currentElection.id)?.status === ApplicationStatus.APPROVED
-                  ? 'text-green-700' :
-                applications.find(app => app.studentId === user.id && app.electionId === currentElection.id)?.status === ApplicationStatus.REJECTED
-                  ? 'text-red-700' :
-                  'text-yellow-700'
-              }`}>
-                Current Status: {applications.find(app => app.studentId === user.id && app.electionId === currentElection.id)?.status.toUpperCase()}
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleApplyForPosition} className="flex justify-center">
-              <button
-                type="submit"
-                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75 transform hover:scale-105 transition-all duration-300"
-                aria-label={`Apply for position in ${currentElection.title}`}
-              >
-                Apply to be a Candidate
-              </button>
-            </form>
-          )}
-        </div>
-
-
-        {/* Voting Section for Students */}
-        <div className="space-y-6 p-6 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
-          <h2 className="text-2xl font-bold text-blue-800 text-center mb-4">Cast Your Vote</h2>
-
-          {hasVoted ? (
-            <div className="text-center p-4 bg-green-100 rounded-lg text-green-800 border-green-300">
-              <p className="font-bold text-xl mb-2">✅ You have already voted for this election!</p>
-              <p className="text-lg">Thank you for participating. Your vote cannot be changed.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleGenerateVoteQr}>
-              <div className="mb-4">
-                <label htmlFor="voterName" className="block text-blue-700 text-sm font-bold mb-2">
-                  Your Name:
-                </label>
-                <input
-                  type="text"
-                  id="voterName"
-                  className="shadow appearance-none border rounded-lg w-full py-3 px-4 bg-white text-gray-900 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                  value={studentNameInput}
-                  onChange={(e) => setStudentNameInput(e.target.value)}
-                  required
-                  readOnly={!!user?.username} // If user is logged in, name is pre-filled
-                />
+          {/* Application Section for Students */}
+          <div className="space-y-6 p-7 border-2 border-purple-400 rounded-xl bg-purple-50 mb-10 shadow-md">
+            <h2 className="text-3xl font-bold text-purple-800 text-center mb-5">Apply for Position</h2>
+            {hasApplied ? (
+              <div className="text-center p-4 bg-purple-100 rounded-lg border border-purple-200">
+                <p className="text-purple-700 font-semibold mb-3 text-lg">
+                  You have already applied for this election.
+                </p>
+                <p className={`text-xl font-extrabold px-4 py-2 rounded-full inline-block ${
+                  myApplication?.status === ApplicationStatus.APPROVED
+                    ? 'bg-green-600 text-white' :
+                  myApplication?.status === ApplicationStatus.REJECTED
+                    ? 'bg-red-600 text-white' :
+                    'bg-yellow-500 text-white'
+                }`}>
+                  Status: {myApplication?.status.toUpperCase()}
+                </p>
+                {myApplication?.status === ApplicationStatus.REJECTED && (
+                  <p className="text-sm text-gray-600 mt-3">Your application was not approved. Consider re-applying for future elections.</p>
+                )}
+                {myApplication?.status === ApplicationStatus.PENDING && (
+                  <p className="text-sm text-gray-600 mt-3">Your application is currently under review by administrators.</p>
+                )}
               </div>
-              <div className="mb-6">
-                <label htmlFor="voterRollNumber" className="block text-blue-700 text-sm font-bold mb-2">
-                  Your Roll Number:
-                </label>
-                <input
-                  type="text"
-                  id="voterRollNumber"
-                  className="shadow appearance-none border rounded-lg w-full py-3 px-4 bg-white text-gray-900 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                  value={studentRollNumberInput}
-                  onChange={(e) => setStudentRollNumberInput(e.target.value)}
-                  required
-                  readOnly={!!user?.rollNumber} // If user is logged in, roll number is pre-filled
-                />
-              </div>
+            ) : (
+              <form onSubmit={handleApplyForPosition} className="flex justify-center">
+                <button
+                  type="submit"
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full focus:outline-none focus:ring-4 focus:ring-purple-300 transform hover:scale-105 transition-all duration-300 shadow-lg"
+                  aria-label={`Apply for position in ${currentElection.title}`}
+                >
+                  Apply to be a Candidate
+                </button>
+              </form>
+            )}
+          </div>
 
-              {currentElection.candidates.length === 0 ? (
-                  <div className="text-center p-4 bg-yellow-100 rounded-lg text-yellow-800">
-                      <p className="font-semibold">No candidates available for this election yet.</p>
-                      <p className="text-sm">Applications are pending or no students have applied.</p>
-                  </div>
-              ) : (
-                <div className="space-y-3 mb-6" role="radiogroup" aria-labelledby="candidate-selection-heading">
-                  <p id="candidate-selection-heading" className="block text-blue-700 text-sm font-bold mb-2">
-                    Select your preferred candidate:
-                  </p>
-                  {currentElection.candidates.map(candidate => (
-                    <label
-                      key={candidate.id}
-                      htmlFor={`candidate-${candidate.id}`}
-                      className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                        selectedCandidateId === candidate.id
-                          ? 'bg-blue-100 border-blue-600 shadow-md'
-                          : 'bg-white border-gray-200 hover:border-blue-300'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        id={`candidate-${candidate.id}`}
-                        name="candidate"
-                        value={candidate.id}
-                        checked={selectedCandidateId === candidate.id}
-                        onChange={() => setSelectedCandidateId(candidate.id)}
-                        className="form-radio h-5 w-5 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                        aria-label={candidate.name}
-                      />
-                      <span className="ml-3 text-lg font-medium text-gray-800">{candidate.name}</span>
-                    </label>
-                  ))}
+
+          {/* Voting Section for Students */}
+          <div className="space-y-6 p-7 border-2 border-blue-400 rounded-xl bg-blue-50 shadow-md">
+            <h2 className="text-3xl font-bold text-blue-800 text-center mb-5">Cast Your Vote</h2>
+
+            {hasVoted ? (
+              <div className="text-center p-5 bg-green-100 rounded-lg text-green-800 border border-green-300 shadow-sm">
+                <p className="font-bold text-2xl mb-3">✅ Vote Recorded!</p>
+                <p className="text-lg">You have already successfully cast your vote for this election. Thank you for participating!</p>
+                <p className="text-md text-gray-600 mt-2">Your vote cannot be changed.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleGenerateVoteQr}>
+                <div className="mb-5">
+                  <label htmlFor="voterName" className="block text-blue-800 text-base font-bold mb-2">
+                    Your Name:
+                  </label>
+                  <input
+                    type="text"
+                    id="voterName"
+                    className="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-3 px-4 bg-white text-gray-900 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    value={studentNameInput}
+                    onChange={(e) => setStudentNameInput(e.target.value)}
+                    required
+                    readOnly={!!user?.username} // If user is logged in, name is pre-filled
+                    aria-label="Your Name"
+                  />
                 </div>
-              )}
+                <div className="mb-7">
+                  <label htmlFor="voterRollNumber" className="block text-blue-800 text-base font-bold mb-2">
+                    Your Roll Number:
+                  </label>
+                  <input
+                    type="text"
+                    id="voterRollNumber"
+                    className="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-3 px-4 bg-white text-gray-900 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    value={studentRollNumberInput}
+                    onChange={(e) => setStudentRollNumberInput(e.target.value)}
+                    required
+                    readOnly={!!user?.rollNumber} // If user is logged in, roll number is pre-filled
+                    aria-label="Your Roll Number"
+                  />
+                </div>
 
-              <button
-                type="submit"
-                disabled={!selectedCandidateId || currentElection.candidates.length === 0 || !studentNameInput || !studentRollNumberInput}
-                className={`w-full font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-75 transform hover:scale-105 transition-all duration-300 mt-6 ${
-                  selectedCandidateId && currentElection.candidates.length > 0 && studentNameInput && studentRollNumberInput
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500'
-                    : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                }`}
-                aria-disabled={!selectedCandidateId || currentElection.candidates.length === 0 || !studentNameInput || !studentRollNumberInput}
-                aria-label="Generate QR to Vote"
-              >
-                Generate QR to Vote
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
+                {currentElection.candidates.length === 0 ? (
+                    <div className="text-center p-5 bg-yellow-100 rounded-lg text-yellow-800 border border-yellow-300 shadow-sm">
+                        <p className="font-bold text-xl mb-2">⚠️ No candidates approved yet!</p>
+                        <p className="text-md">Administrators need to approve applications before you can vote.</p>
+                    </div>
+                ) : (
+                  <div className="space-y-4 mb-7" role="radiogroup" aria-labelledby="candidate-selection-heading">
+                    <p id="candidate-selection-heading" className="block text-blue-800 text-base font-bold mb-3">
+                      Select your preferred candidate:
+                    </p>
+                    {currentElection.candidates.map(candidate => (
+                      <label
+                        key={candidate.id}
+                        htmlFor={`candidate-${candidate.id}`}
+                        className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all duration-200 shadow-sm ${
+                          selectedCandidateId === candidate.id
+                            ? 'bg-blue-100 border-blue-600 ring-2 ring-blue-500'
+                            : 'bg-white border-gray-200 hover:border-blue-300'
+                        }`}
+                        tabIndex={0} // Make label focusable
+                        onKeyDown={(e) => { // Allow selection with keyboard
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setSelectedCandidateId(candidate.id);
+                            }
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          id={`candidate-${candidate.id}`}
+                          name="candidate"
+                          value={candidate.id}
+                          checked={selectedCandidateId === candidate.id}
+                          onChange={() => setSelectedCandidateId(candidate.id)}
+                          className="form-radio h-5 w-5 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          aria-label={`Vote for ${candidate.name}`}
+                          tabIndex={-1} // Hide actual radio from tab order, controlled by label
+                        />
+                        <span className="ml-4 text-lg font-medium text-gray-800">{candidate.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
 
-      {/* Vote QR Code Modal */}
-      {showVoteQrModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog" aria-labelledby="voteQrCodeModalTitle">
-          <div className="bg-white p-8 rounded-lg shadow-xl relative max-w-sm w-full text-center">
-            <h3 id="voteQrCodeModalTitle" className="text-2xl font-bold text-gray-800 mb-4">Scan to Vote</h3>
-            <p className="text-gray-700 mb-4">Scan this QR code with your phone to cast your vote for: <span className="font-semibold">{currentElection.candidates.find(c => c.id === voteConfirmedCandidateId)?.name}</span></p>
-            <div ref={voteQrCanvasRef} className="flex justify-center p-4 bg-gray-50 border border-gray-200 rounded-md mx-auto">
-              {/* QR code will be rendered here by qrcode.js */}
-            </div>
-            <p className="text-center text-gray-700 text-sm break-all font-mono mt-4 p-2 bg-gray-100 rounded-md">
-              <span className="font-semibold">Code:</span> {voteQrCodeValue}
-            </p>
-            <div className="mt-6 flex flex-col space-y-3">
-                <p className="text-gray-800 font-semibold">Simulate "Phone Vote" Action:</p>
                 <button
-                    onClick={handleSimulateVote}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300"
-                    aria-label="Confirm and Cast Vote"
+                  type="submit"
+                  disabled={!selectedCandidateId || currentElection.candidates.length === 0 || !studentNameInput || !studentRollNumberInput}
+                  className={`w-full font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-opacity-75 transform hover:scale-105 transition-all duration-300 ease-in-out shadow-lg ${
+                    selectedCandidateId && currentElection.candidates.length > 0 && studentNameInput && studentRollNumberInput
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-300'
+                      : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  }`}
+                  aria-disabled={!selectedCandidateId || currentElection.candidates.length === 0 || !studentNameInput || !studentRollNumberInput}
+                  aria-label="Generate QR to Vote"
                 >
-                    Confirm Vote
+                  Generate QR to Vote
                 </button>
-                <button
-                    onClick={handleCancelVote}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300"
-                    aria-label="Cancel Voting Process"
-                >
-                    Cancel
-                </button>
-            </div>
+              </form>
+            )}
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Vote QR Code Modal */}
+        {showVoteQrModal && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50 p-4 animate-fade-in" aria-modal="true" role="dialog" aria-labelledby="voteQrCodeModalTitle">
+            <div className="bg-white p-8 rounded-xl shadow-2xl relative max-w-sm w-full text-center transform scale-95 animate-scale-in border border-gray-100">
+              <h3 id="voteQrCodeModalTitle" className="text-3xl font-bold text-gray-800 mb-4">Confirm Your Vote</h3>
+              <p className="text-gray-700 mb-6 text-lg">Scan this QR code with your phone to cast your vote for: <br /><span className="font-extrabold text-blue-700 text-xl">{currentElection.candidates.find(c => c.id === voteConfirmedCandidateId)?.name}</span></p>
+              <div ref={voteQrCanvasRef} className="flex justify-center p-5 bg-gray-50 border border-gray-200 rounded-lg mx-auto max-w-[280px]">
+                {/* QR code will be rendered here by qrcode.js */}
+              </div>
+              <p className="text-center text-gray-700 text-sm break-all font-mono mt-5 p-3 bg-gray-100 rounded-md border border-gray-200">
+                <span className="font-semibold text-gray-800">QR Value:</span> {voteQrCodeValue}
+              </p>
+              <div className="mt-8 flex flex-col space-y-4">
+                  <p className="text-gray-800 font-bold text-lg">Ready to cast your vote?</p>
+                  <button
+                      onClick={handleSimulateVote}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      aria-label="Confirm and Cast Vote"
+                  >
+                      Confirm and Cast Vote
+                  </button>
+                  <button
+                      onClick={handleCancelVote}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      aria-label="Cancel Voting Process"
+                  >
+                      Cancel
+                  </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <Footer />
+    </>
   );
 };
 

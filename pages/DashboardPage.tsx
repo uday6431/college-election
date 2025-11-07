@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole, Application, ApplicationStatus, Election, Candidate } from '../types';
 import { DUMMY_ELECTION_TEMPLATE } from '../constants';
+import Footer from '../components/Footer';
 
 interface DashboardPageProps {
   user: User;
@@ -14,9 +15,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, applications, setAp
   const navigate = useNavigate();
 
   if (!user) {
-    // This case should ideally be handled by ProtectedRoute, but as a fallback:
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] bg-gray-50">
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
         <p className="text-xl text-gray-700">Please log in to view the dashboard.</p>
       </div>
     );
@@ -67,118 +67,159 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, applications, setAp
     }
   };
 
+  const handleClearAllLocalData = () => {
+    if (window.confirm('Are you sure you want to clear ALL local application data? This action cannot be undone and will reset the app for this browser.')) {
+      localStorage.removeItem('users');
+      localStorage.removeItem('applications');
+      localStorage.removeItem('elections');
+      localStorage.removeItem('qrCodes');
+      localStorage.removeItem('currentUser'); // Clear current user as well
+
+      // Reload the page to reset all React states to their initial defaults
+      window.location.reload();
+    }
+  };
+
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-gray-50 p-8">
-      <div className="container mx-auto">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-6">
-          Welcome, {user.username}!
-        </h1>
-        <p className="text-xl text-gray-700 mb-8">
-          You are logged in as an <span className="font-semibold text-blue-700">{user.role}</span>.
-        </p>
+    <>
+      <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+        <div className="container mx-auto max-w-5xl">
+          <h1 className="text-5xl font-extrabold text-gray-900 mb-8 text-center">
+            Welcome, <span className="text-blue-700">{user.username}</span>!
+          </h1>
+          <p className="text-xl text-gray-700 mb-10 text-center">
+            You are currently logged in as an <span className="font-semibold text-blue-800">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>.
+          </p>
 
-        {isAdmin ? (
-          <div className="space-y-8">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Admin Functions:</h2>
-              <ul className="list-disc list-inside text-gray-700 space-y-2">
-                <li>Manage elections (create, edit, delete - <span className="text-sm text-gray-500 italic">simulated for dummy election</span>)</li>
-                <li>View all candidates and their applications</li>
-                <li>Generate QR codes for voting</li>
-                <li>Monitor election results in real-time</li>
-                <li>Manage user roles and permissions (<span className="text-sm text-gray-500 italic">limited in this frontend app</span>)</li>
-                <li>View system logs and analytics (<span className="text-sm text-gray-500 italic">not implemented</span>)</li>
-              </ul>
-            </div>
+          {isAdmin ? (
+            <div className="space-y-10">
+              <div className="bg-white p-8 rounded-xl shadow-xl border border-gray-100">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-3 border-gray-200">Admin Overview:</h2>
+                <ul className="list-disc list-inside text-gray-700 space-y-3 text-lg">
+                  <li>Manage elections (create, edit, delete - <span className="text-sm text-gray-500 italic">simulated for dummy election</span>)</li>
+                  <li>Review and approve candidate applications</li>
+                  <li>Generate and track unique QR codes for secure voting</li>
+                  <li>Monitor real-time election results and participation</li>
+                  <li>Oversee user accounts and roles (<span className="text-sm text-gray-500 italic">limited in this frontend app</span>)</li>
+                </ul>
+              </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Manage Applications ({pendingApplications.length} Pending)</h2>
-              {pendingApplications.length === 0 ? (
-                <p className="text-gray-600">No pending applications.</p>
-              ) : (
-                <div className="space-y-4 max-h-80 overflow-y-auto">
-                  {pendingApplications.map(app => (
-                    <div key={app.id} className="border p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50">
-                      <div>
-                        <p className="font-semibold text-gray-800">Student: {app.studentName} (ID: {app.studentId})</p>
-                        <p className="text-gray-600">Applying for: {DUMMY_ELECTION_TEMPLATE.title}</p>
-                        <p className={`text-sm ${app.status === ApplicationStatus.PENDING ? 'text-yellow-600' : ''}`}>
-                          Status: {app.status}
-                        </p>
+              <div className="bg-white p-8 rounded-xl shadow-xl border border-gray-100">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-3 border-gray-200">
+                  Manage Applications ({pendingApplications.length} Pending)
+                </h2>
+                {pendingApplications.length === 0 ? (
+                  <p className="text-gray-600 text-lg p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    🎉 No pending applications at the moment. All caught up!
+                  </p>
+                ) : (
+                  <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2">
+                    {pendingApplications.map(app => (
+                      <div key={app.id} className="border border-blue-200 p-5 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center bg-blue-50 shadow-sm transition-shadow hover:shadow-md duration-200">
+                        <div>
+                          <p className="font-bold text-gray-800 text-xl mb-1">Student: {app.studentName}</p>
+                          <p className="text-gray-600">Roll Number: {user.rollNumber || 'N/A'}</p> {/* Assuming roll number is associated with student */}
+                          <p className="text-gray-600 text-md">Applying for: <span className="font-semibold text-blue-700">{DUMMY_ELECTION_TEMPLATE.title}</span></p>
+                          <p className={`text-sm mt-2 font-medium px-2 py-1 rounded-full inline-block ${app.status === ApplicationStatus.PENDING ? 'bg-yellow-200 text-yellow-800' : ''}`}>
+                            Status: {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                          </p>
+                        </div>
+                        <div className="mt-4 md:mt-0 flex space-x-3">
+                          <button
+                            onClick={() => handleApplicationAction(app.id, ApplicationStatus.APPROVED)}
+                            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-5 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+                            aria-label={`Approve application from ${app.studentName}`}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleApplicationAction(app.id, ApplicationStatus.REJECTED)}
+                            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+                            aria-label={`Reject application from ${app.studentName}`}
+                          >
+                            Reject
+                          </button>
+                        </div>
                       </div>
-                      <div className="mt-3 md:mt-0 flex space-x-2">
-                        <button
-                          onClick={() => handleApplicationAction(app.id, ApplicationStatus.APPROVED)}
-                          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-                          aria-label={`Approve application from ${app.studentName}`}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleApplicationAction(app.id, ApplicationStatus.REJECTED)}
-                          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-                          aria-label={`Reject application from ${app.studentName}`}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800">
-              <p className="font-semibold">Note:</p>
-              <p>This is a placeholder dashboard. Navigation links in the header provide access to specific sections.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Student Functions:</h2>
-              <ul className="list-disc list-inside text-gray-700 space-y-2">
-                <li>View upcoming and ongoing elections</li>
-                <li>Apply for open positions</li>
-                <li>View candidate profiles and manifestos</li>
-                <li>Cast your vote securely</li>
-                <li>View election results (after elections conclude)</li>
-              </ul>
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">My Applications</h2>
-              {studentApplications.length === 0 ? (
-                <p className="text-gray-600">You have not submitted any applications yet.</p>
-              ) : (
-                <div className="space-y-4">
-                  {studentApplications.map(app => (
-                    <div key={app.id} className={`border p-4 rounded-lg ${
-                      app.status === ApplicationStatus.APPROVED ? 'bg-green-50 border-green-300' :
-                      app.status === ApplicationStatus.REJECTED ? 'bg-red-50 border-red-300' :
-                      'bg-yellow-50 border-yellow-300'
-                    }`}>
-                      <p className="font-semibold text-gray-800">Applying for: {DUMMY_ELECTION_TEMPLATE.title}</p>
-                      <p className={`text-md font-medium mt-1 ${
-                        app.status === ApplicationStatus.APPROVED ? 'text-green-700' :
-                        app.status === ApplicationStatus.REJECTED ? 'text-red-700' :
-                        'text-yellow-700'
+              <div className="mt-10 p-8 bg-red-100 border-l-4 border-red-500 text-red-900 rounded-xl shadow-xl" role="alert" aria-labelledby="danger-zone-heading">
+                <h3 id="danger-zone-heading" className="text-2xl font-bold mb-4">🚨 Danger Zone: Manage Local Data</h3>
+                <p className="mb-6 text-lg text-red-800">
+                  This action will <span className="font-extrabold underline">permanently clear all user accounts, election data, applications, and QR codes</span> stored exclusively in
+                  <span className="font-extrabold text-red-700 ml-1"> this browser's local storage</span>.
+                  This is intended for development, testing, or resetting your local demo environment.
+                  <span className="font-extrabold block mt-2">This will NOT affect data in other users' browsers.</span>
+                </p>
+                <button
+                  onClick={handleClearAllLocalData}
+                  className="bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-8 rounded-lg focus:outline-none focus:ring-4 focus:ring-red-300 focus:ring-opacity-75 transform hover:scale-105 transition-all duration-300 shadow-lg"
+                  aria-label="Clear All Local Application Data"
+                >
+                  Clear All Local Data
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-10">
+              <div className="bg-white p-8 rounded-xl shadow-xl border border-gray-100">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-3 border-gray-200">Student Overview:</h2>
+                <ul className="list-disc list-inside text-gray-700 space-y-3 text-lg">
+                  <li>Explore available elections and candidate profiles.</li>
+                  <li>Submit applications for desired election positions.</li>
+                  <li>Securely cast your vote using generated QR codes.</li>
+                  <li>Track the status of your applications.</li>
+                  <li>View election results once they are concluded.</li>
+                </ul>
+              </div>
+
+              <div className="bg-white p-8 rounded-xl shadow-xl border border-gray-100">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-3 border-gray-200">My Applications</h2>
+                {studentApplications.length === 0 ? (
+                  <p className="text-gray-600 text-lg p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    You have not submitted any applications yet. Visit the Elections page to apply!
+                  </p>
+                ) : (
+                  <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
+                    {studentApplications.map(app => (
+                      <div key={app.id} className={`border p-5 rounded-lg shadow-sm ${
+                        app.status === ApplicationStatus.APPROVED ? 'bg-green-50 border-green-300' :
+                        app.status === ApplicationStatus.REJECTED ? 'bg-red-50 border-red-300' :
+                        'bg-yellow-50 border-yellow-300'
                       }`}>
-                        Status: {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+                        <p className="font-bold text-gray-800 text-xl mb-2">Applying for: <span className="text-blue-700">{DUMMY_ELECTION_TEMPLATE.title}</span></p>
+                        <p className={`text-lg font-semibold mt-1 ${
+                          app.status === ApplicationStatus.APPROVED ? 'text-green-700' :
+                          app.status === ApplicationStatus.REJECTED ? 'text-red-700' :
+                          'text-yellow-700'
+                        }`}>
+                          Status: {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                        </p>
+                        {app.status === ApplicationStatus.REJECTED && (
+                          <p className="text-sm text-gray-600 mt-2">Your application was not approved. You may re-apply for future elections or consider other positions.</p>
+                        )}
+                        {app.status === ApplicationStatus.PENDING && (
+                          <p className="text-sm text-gray-600 mt-2">Your application is currently under review by administrators.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800">
-              <p className="font-semibold">Note:</p>
-              <p>This is a placeholder dashboard. Navigation links in the header provide access to specific sections.</p>
-            </div>
+          )}
+          <div className="mt-12 p-6 bg-blue-100 border-l-4 border-blue-500 text-blue-900 rounded-xl shadow-md" role="complementary">
+            <p className="font-bold text-xl mb-2">💡 Quick Tip:</p>
+            <p className="text-lg">Use the navigation links in the header to access specific sections like Elections, QR Codes (Admin), and Results.</p>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 

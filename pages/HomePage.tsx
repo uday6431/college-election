@@ -1,18 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import FeatureCard from '../components/FeatureCard';
+import Footer from '../components/Footer';
 
 // Simple SVG icons (placeholders)
 const ConductIcon: React.FC = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-16 w-16 text-blue-500"
+    className="h-24 w-24 text-blue-600"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true" // Decorative icon
   >
     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
     <circle cx="9" cy="7" r="4"></circle>
@@ -23,13 +25,14 @@ const ConductIcon: React.FC = () => (
 const ParticipateIcon: React.FC = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-16 w-16 text-green-500"
+    className="h-24 w-24 text-green-600"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true" // Decorative icon
   >
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
     <circle cx="9" cy="7" r="4"></circle>
@@ -41,13 +44,14 @@ const ParticipateIcon: React.FC = () => (
 const CastVoteIcon: React.FC = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-16 w-16 text-purple-500"
+    className="h-24 w-24 text-purple-600"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true" // Decorative icon
   >
     <path d="M20 17v-2a3 3 0 0 0-3-3H9V3a3 3 0 0 0-3-3H3a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3v-2h4v2a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v2"></path>
     <circle cx="9" cy="9" r="2"></circle>
@@ -63,38 +67,46 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 bg-gray-100 min-h-[calc(100vh-80px)]">
-      <div className="max-w-4xl text-center mb-12">
-        <h1 className="text-5xl font-extrabold text-gray-900 mb-6">Manage Student Elections</h1>
-        <p className="text-xl text-gray-700 leading-relaxed mb-8">
-          Faculty manage how elections are conducted, interested students participate, and remaining students cast their vote.
-        </p>
-        <button
-          onClick={handleGetStartedClick}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out"
-        >
-          Get Started
-        </button>
-      </div>
+    <>
+      <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-[calc(100vh-80px)]">
+        <div className="max-w-6xl text-center mb-16">
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 mb-8 leading-tight drop-shadow-md">
+            Seamless & Secure Student Elections
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-700 leading-relaxed mb-10 max-w-3xl mx-auto">
+            Empowering colleges to manage elections efficiently, allowing students to participate actively, and ensuring fair voting.
+          </p>
+          <button
+            onClick={handleGetStartedClick}
+            className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-bold py-4 px-10 rounded-full text-xl shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-blue-300"
+          >
+            Get Started Today
+          </button>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
-        <FeatureCard
-          icon={<ConductIcon />}
-          title="Conduct Elections"
-          description="Faculty oversee the election process and manage the voting system."
-        />
-        <FeatureCard
-          icon={<ParticipateIcon />}
-          title="Participate in Positions"
-          description="Students can apply for positions they are interested in and campaign for votes."
-        />
-        <FeatureCard
-          icon={<CastVoteIcon />}
-          title="Cast Votes"
-          description="Students securely cast their votes using unique QR codes provided by the system."
-        />
+        <section className="w-full max-w-7xl px-4 py-16">
+          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-12">Key Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-14">
+            <FeatureCard
+              icon={<ConductIcon />}
+              title="Conduct Elections"
+              description="Administrators can easily set up, manage, and monitor the entire election process with robust tools."
+            />
+            <FeatureCard
+              icon={<ParticipateIcon />}
+              title="Participate as Candidate"
+              description="Students can confidently apply for various positions and effectively campaign within the system."
+            />
+            <FeatureCard
+              icon={<CastVoteIcon />}
+              title="Cast Secure Votes"
+              description="Ensure fair and verifiable voting with unique QR codes for each student, preventing fraud."
+            />
+          </div>
+        </section>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 

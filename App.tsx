@@ -9,6 +9,7 @@ import QrCodesPage from './pages/QrCodesPage';
 import ResultsPage from './pages/ResultsPage';
 import { User, UserRole, Election, QRCodeEntry, Application, ApplicationStatus } from './types';
 import { DUMMY_ELECTION_TEMPLATE, DEFAULT_USERS, DEFAULT_APPLICATIONS } from './constants';
+// No need to import Footer here, as it's directly used in each page.
 
 // Helper component to navigate away if user is not logged in or role is not allowed
 const ProtectedRoute: React.FC<{ user: User | null; children: React.ReactNode; allowedRoles?: UserRole[] }> = ({ user, children, allowedRoles }) => {
@@ -65,7 +66,7 @@ const AppContent: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // Persist user, users, elections, and QR codes to localStorage whenever they change
+  // Persist user, users, applications, and elections to localStorage whenever they change
   useEffect(() => {
     if (user) {
       localStorage.setItem('currentUser', JSON.stringify(user));
@@ -86,13 +87,6 @@ const AppContent: React.FC = () => {
     localStorage.setItem('elections', JSON.stringify(elections));
   }, [elections]);
 
-  useEffect(() => {
-    const savedQrCodes = localStorage.getItem('qrCodes');
-    if (savedQrCodes) {
-      setQrCodes(JSON.parse(savedQrCodes));
-    }
-  }, []); // Only load once
-
   // Effect to synchronize DUMMY_ELECTION_TEMPLATE candidates with approved applications
   useEffect(() => {
     setElections(prevElections => {
@@ -108,20 +102,28 @@ const AppContent: React.FC = () => {
 
           // Merge approved candidates with existing candidates, preserving vote counts
           const newCandidatesMap = new Map<string, { id: string; name: string; votes: number }>();
+          // Add existing candidates first
           election.candidates.forEach(existingC => {
             newCandidatesMap.set(existingC.id, existingC);
           });
+          // Add/update approved candidates (new ones get 0 votes, existing keep their votes)
           approvedCandidates.forEach(ac => {
             const existingVotes = newCandidatesMap.get(ac.id)?.votes || 0;
             newCandidatesMap.set(ac.id, { ...ac, votes: existingVotes });
           });
-          return { ...election, candidates: Array.from(newCandidatesMap.values()) };
+          // Filter out candidates whose applications were rejected or are no longer approved
+          const finalCandidates = Array.from(newCandidatesMap.values()).filter(c => 
+            applications.some(app => app.studentId === c.id && app.electionId === DUMMY_ELECTION_TEMPLATE.id && app.status === ApplicationStatus.APPROVED)
+          );
+
+          return { ...election, candidates: finalCandidates };
         }
         return election;
       });
       return updatedElections;
     });
   }, [applications]); // Re-run when applications change
+
 
   // Separate state for QR codes as it's modified independently
   const [qrCodes, setQrCodes] = useState<QRCodeEntry[]>(() => {
@@ -152,11 +154,11 @@ const AppContent: React.FC = () => {
   return (
     <>
       <Navbar user={user} onLogout={handleLogout} />
+      {/* The main section now has flex-grow to push the footer to the bottom */}
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={user ? <DashboardPage user={user} applications={applications} setApplications={setApplications} setElections={setElections} /> : <HomePage />} />
           <Route path="/login" element={<LoginPage onLogin={handleLogin} users={users} setUsers={setUsers} />} />
-          {/* Fix: Pass `isRegisterMode` prop to LoginPage component */}
           <Route path="/register" element={<LoginPage onLogin={handleLogin} users={users} setUsers={setUsers} isRegisterMode={true} />} />
           <Route
             path="/dashboard"
@@ -238,7 +240,8 @@ const App: React.FC = () => {
   console.log('Login and registration are simulated with dummy credentials and local storage (see LoginPage.tsx and constants.ts).');
   return (
     <Router>
-      <div className="flex flex-col min-h-screen">
+      {/* Added flex-col to root div to enable sticky footer */}
+      <div className="flex flex-col min-h-screen"> 
         <AppContent />
       </div>
     </Router>
